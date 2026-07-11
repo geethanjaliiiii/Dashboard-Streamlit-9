@@ -48,6 +48,48 @@ def load_data():
 
 df = load_data()
 
+def show_section_heading(
+    title,
+    start_date=None,
+    end_date=None,
+    icon="",
+    heading_size="1.5rem",
+    top_margin="18px",
+    bottom_margin="12px"
+):
+    date_html = ""
+
+    if start_date is not None and end_date is not None:
+        date_html = f"""
+        <div style="
+            font-size:0.95rem;
+            font-weight:500;
+            opacity:0.72;
+            margin-top:4px;
+        ">
+            {start_date} to {end_date}
+        </div>
+        """
+
+    st.markdown(
+        f"""
+        <div style="
+            margin-top:{top_margin};
+            margin-bottom:{bottom_margin};
+        ">
+            <div style="
+                font-size:{heading_size};
+                font-weight:700;
+                line-height:1.2;
+            ">
+                {icon} {title}
+            </div>
+            {date_html}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
 # =====================================================
 # CACHED MONTH-WISE MAE — DAILY FORECAST
 # One bar per calendar month across all years
@@ -866,9 +908,12 @@ else:
         mape_before = ((actual - before).abs() / actual).mean() * 100
         mape_after = ((actual - after).abs() / actual).mean() * 100
 
-        st.markdown(
-            f"### 📊 Cumulative Performance of  Daily Forecast "
-            f"({start_date} to {end_date})"
+        show_section_heading(
+            title="Cumulative Performance of Daily Forecast",
+            start_date=start_date,
+            end_date=end_date,
+            icon="📊",
+            heading_size="1.55rem"
         )
 
         metric_col1, metric_col2, metric_col3 = st.columns(3)
@@ -997,9 +1042,12 @@ else:
             .max()
         )
 
-        st.markdown(
-            f"### 📊 Cumulative Performance of 2-Hour Ahead Forecast "
-            f"({cumulative_2hr_start} to {cumulative_2hr_end})"
+        show_section_heading(
+            title="Cumulative Performance of 2-Hour Ahead Forecast",
+            start_date=cumulative_2hr_start,
+            end_date=cumulative_2hr_end,
+            icon="📊",
+            heading_size="1.55rem"
         )
 
         actual_cum_2hr = cumulative_2hr_df["Actual_GHI"]
@@ -1223,9 +1271,12 @@ else:
                 )
 
     else:
-        st.markdown(
-            f"### 📊 Cumulative Performance of 2-Hour Ahead Forecast "
-            f"(Through {previous_day})"
+        show_section_heading(
+            title="Cumulative Performance of 2-Hour Ahead Forecast",
+            start_date="Beginning of dataset",
+            end_date=previous_day,
+            icon="📊",
+            heading_size="1.55rem"
         )
 
         st.warning(
@@ -1377,20 +1428,14 @@ else:
 
             with st.container(border=True):
 
-                st.markdown(
-                    f"""
-                    <div style="
-                        font-size:1.5rem;
-                        font-weight:700;
-                        line-height:1.25;
-                        white-space:nowrap;
-                        margin-bottom:8px;
-                    ">
-                        📈 Daily Forecast
-                        ({daily_start_date} to {daily_end_date})
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+                show_section_heading(
+                    title="Daily Forecast",
+                    start_date=daily_start_date,
+                    end_date=daily_end_date,
+                    icon="📈",
+                    heading_size="1.5rem",
+                    top_margin="2px",
+                    bottom_margin="8px"
                 )
 
                 st.markdown(
@@ -1572,20 +1617,14 @@ else:
 
                 with st.container(border=True):
 
-                    st.markdown(
-                        f"""
-                        <div style="
-                            font-size:1.5rem;
-                            font-weight:700;
-                            line-height:1.25;
-                            white-space:nowrap;
-                            margin-bottom:8px;
-                        ">
-                            🕒 2-Hour Ahead Forecast
-                            ({twohr_start_date} to {twohr_end_date})
-                        </div>
-                        """,
-                        unsafe_allow_html=True
+                    show_section_heading(
+                        title="2-Hour Ahead Forecast",
+                        start_date=twohr_start_date,
+                        end_date=twohr_end_date,
+                        icon="🕒",
+                        heading_size="1.5rem",
+                        top_margin="2px",
+                        bottom_margin="8px"
                     )
 
                     st.markdown(
@@ -1691,9 +1730,12 @@ monthly_2hr_performance, twohr_monthly_start, twohr_monthly_end = (
 
 if not monthly_2hr_performance.empty:
 
-    st.markdown(
-        f"## 📊 Month-Wise MAE of 2-Hour Ahead Forecast "
-        f"({twohr_monthly_start} to {twohr_monthly_end})"
+    show_section_heading(
+        title="Month-Wise MAE of 2-Hour Ahead Forecast",
+        start_date=twohr_monthly_start,
+        end_date=twohr_monthly_end,
+        icon="📅",
+        heading_size="1.5rem"
     )
 
     with st.container(border=True):
@@ -1876,9 +1918,12 @@ def calculate_timeslot_2hr_mape(input_df):
 
 if not timeslot_2hr_mape_performance.empty:
 
-    st.markdown(
-        f"## ⏱️ Time-Slot-Wise MAPE of 2-Hour Ahead Forecast "
-        f"({timeslot_2hr_mape_start} to {timeslot_2hr_mape_end})"
+    show_section_heading(
+        title="Time-Slot-Wise MAPE of 2-Hour Ahead Forecast",
+        start_date=timeslot_2hr_mape_start,
+        end_date=timeslot_2hr_mape_end,
+        icon="⏱️",
+        heading_size="1.5rem"
     )
 
     with st.container(border=True):
@@ -2104,10 +2149,12 @@ def calculate_individual_2hr_mape_distribution(input_df):
 
 if not individual_mape_distribution_df.empty:
 
-    st.markdown(
-        f"## 🎯 MAPE Distribution of 2-Hour Ahead Forecast "
-        f"({individual_distribution_start} to "
-        f"{individual_distribution_end})"
+    show_section_heading(
+        title="MAPE Distribution of 2-Hour Ahead Forecast",
+        start_date=individual_distribution_start,
+        end_date=individual_distribution_end,
+        icon="🎯",
+        heading_size="1.5rem"
     )
 
     with st.container(border=True):
