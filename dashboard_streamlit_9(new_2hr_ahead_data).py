@@ -822,13 +822,6 @@ else:
                 )
 
 
-    st.info(
-    "📌 Evaluation Criteria:  All forecast performance metrics are "
-    "computed with "
-    "Actual GHI > 50 W/m². Periods with lower irradiance are excluded "
-    "from evaluation to ensure meaningful assessment."
-)
-
     # =====================================================
     # CUMULATIVE ERROR METRICS: START DATE TO PREVIOUS DAY
     # =====================================================
@@ -885,7 +878,7 @@ else:
             fig_mape = go.Figure()
 
             fig_mape.add_trace(go.Bar(
-                x=["Raw GFS Prediction", "After Daily Forecast"],
+                x=["Raw GFS", "Daily Forecast"],
                 y=[mape_before, mape_after],
                 text=[round(mape_before, 2), round(mape_after, 2)],
                 textposition="auto",
@@ -910,7 +903,7 @@ else:
             fig_mae = go.Figure()
 
             fig_mae.add_trace(go.Bar(
-                x=["Raw GFS Prediction", "After Daily Forecast"],
+                x=["Raw GFS", "Daily Forecast"],
                 y=[mae_before, mae_after],
                 text=[round(mae_before, 2), round(mae_after, 2)],
                 textposition="auto",
@@ -935,7 +928,7 @@ else:
             fig_rmse = go.Figure()
 
             fig_rmse.add_trace(go.Bar(
-                x=["Raw GFS Prediction", "After Daily Forecast"],
+                x=["Raw GFS", "Daily Forecast"],
                 y=[rmse_before, rmse_after],
                 text=[round(rmse_before, 2), round(rmse_after, 2)],
                 textposition="auto",
@@ -1079,9 +1072,9 @@ else:
         )
 
         comparison_labels = [
-            "Raw GFS Prediction",
-            "After Daily Forecast",
-            "After 2 Hour Ahead"
+            "Raw GFS",
+            "Daily Forecast",
+            "2 Hour Ahead"
         ]
 
         comparison_colors = [
@@ -1787,205 +1780,6 @@ else:
     st.warning(
         "Not enough valid 2-hour-ahead forecast data is available "
         "to calculate month-wise MAE."
-    )
-
-# =====================================================
-# TIME-SLOT-WISE MAE — 2-HOUR AHEAD FORECAST
-# One bar per timestamp across all available days
-# =====================================================
-
-@st.cache_data
-def calculate_timeslot_2hr_mae(input_df):
-
-    timeslot_df = input_df.dropna(
-        subset=[
-            "valid_time_ist",
-            "Actual_GHI",
-            "Two_Hour_Ahead_Forecast"
-        ]
-    ).copy()
-
-    timeslot_df["hour"] = (
-        timeslot_df["valid_time_ist"].dt.hour
-        + timeslot_df["valid_time_ist"].dt.minute / 60
-    )
-
-    # Apply the same evaluation rule used in other metrics
-    timeslot_df = timeslot_df[
-        (timeslot_df["hour"] >= 6.5)
-        & (timeslot_df["hour"] <= 17.5)
-        & (timeslot_df["Actual_GHI"] > 50)
-    ].copy()
-
-    if timeslot_df.empty:
-        return pd.DataFrame(), None, None
-
-    # Absolute error for each individual prediction
-    timeslot_df["Absolute_Error"] = (
-        timeslot_df["Actual_GHI"]
-        - timeslot_df["Two_Hour_Ahead_Forecast"]
-    ).abs()
-
-    # Time labels in 24-hour format
-    timeslot_df["Time_Slot"] = (
-        timeslot_df["valid_time_ist"].dt.strftime("%H:%M")
-    )
-
-    # Numeric time used only for correct chronological sorting
-    timeslot_df["Time_Order"] = (
-        timeslot_df["valid_time_ist"].dt.hour * 60
-        + timeslot_df["valid_time_ist"].dt.minute
-    )
-
-    timeslot_performance = (
-        timeslot_df
-        .groupby(
-            ["Time_Order", "Time_Slot"],
-            as_index=False
-        )
-        .agg(
-            Time_Slot_MAE=("Absolute_Error", "mean"),
-            Prediction_Count=("Absolute_Error", "size")
-        )
-        .sort_values("Time_Order")
-        .reset_index(drop=True)
-    )
-
-    start_date = (
-        timeslot_df["valid_time_ist"].dt.date.min()
-    )
-
-    end_date = (
-        timeslot_df["valid_time_ist"].dt.date.max()
-    )
-
-    return timeslot_performance, start_date, end_date
-
-
-# =====================================================
-# CALCULATE TIME-SLOT-WISE MAE
-# =====================================================
-
-(
-    timeslot_2hr_performance,
-    timeslot_2hr_start,
-    timeslot_2hr_end
-) = calculate_timeslot_2hr_mae(df)
-
-
-if not timeslot_2hr_performance.empty:
-
-    st.markdown(
-        f"## ⏱️ Time-Slot-Wise MAE of 2-Hour Ahead Forecast "
-        f"({timeslot_2hr_start} to {timeslot_2hr_end})"
-    )
-
-    with st.container(border=True):
-
-        fig_timeslot_2hr_mae = go.Figure()
-
-        fig_timeslot_2hr_mae.add_trace(go.Bar(
-            x=timeslot_2hr_performance["Time_Slot"],
-            y=timeslot_2hr_performance["Time_Slot_MAE"],
-            name="2-Hour Ahead MAE",
-
-            marker=dict(
-                color=TWO_HOUR_COLOR,
-                line=dict(
-                    color="#1F7A1F",
-                    width=1.2
-                )
-            ),
-
-            text=[
-                f"{value:.2f}"
-                for value in timeslot_2hr_performance[
-                    "Time_Slot_MAE"
-                ]
-            ],
-
-            textposition="outside",
-            cliponaxis=False,
-
-            customdata=timeslot_2hr_performance[
-                "Prediction_Count"
-            ],
-
-            hovertemplate=(
-                "<b>Time: %{x}</b><br>"
-                "MAE: %{y:.2f}<br>"
-                "Predictions: %{customdata}"
-                "<extra></extra>"
-            )
-        ))
-
-        maximum_timeslot_mae = (
-            timeslot_2hr_performance[
-                "Time_Slot_MAE"
-            ].max()
-        )
-
-        timeslot_ymax = (
-            maximum_timeslot_mae * 1.18
-            if (
-                pd.notna(maximum_timeslot_mae)
-                and maximum_timeslot_mae > 0
-            )
-            else 100
-        )
-
-        ordered_time_slots = (
-            timeslot_2hr_performance[
-                "Time_Slot"
-            ].tolist()
-        )
-
-        fig_timeslot_2hr_mae.update_layout(
-            xaxis_title="Time",
-            yaxis_title="MAE",
-            height=500,
-            bargap=0.22,
-            showlegend=False,
-            margin=dict(
-                l=45,
-                r=25,
-                t=35,
-                b=60
-            )
-        )
-
-        fig_timeslot_2hr_mae.update_xaxes(
-            type="category",
-            categoryorder="array",
-            categoryarray=ordered_time_slots,
-            tickmode="array",
-            tickvals=ordered_time_slots,
-            ticktext=ordered_time_slots,
-            tickangle=0,
-            fixedrange=True
-        )
-
-        fig_timeslot_2hr_mae.update_yaxes(
-            range=[0, timeslot_ymax],
-            rangemode="tozero",
-            fixedrange=True
-        )
-
-        st.plotly_chart(
-            fig_timeslot_2hr_mae,
-            width="stretch",
-            key="timeslot_2hr_mae_chart",
-            config={
-                "displayModeBar": False,
-                "staticPlot": True,
-                "responsive": True
-            }
-        )
-
-else:
-    st.warning(
-        "Not enough valid 2-hour-ahead forecast data is available "
-        "to calculate time-slot-wise MAE."
     )
 
 # =====================================================
