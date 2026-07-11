@@ -2202,6 +2202,160 @@ else:
 
 
 # =====================================================
+# DAILY MAE — 2-HOUR AHEAD FORECAST
+# =====================================================
+
+@st.cache_data
+def calculate_daily_2hr_mae(input_df):
+
+    daily_df = input_df.dropna(
+        subset=[
+            "valid_time_ist",
+            "Actual_GHI",
+            "Two_Hour_Ahead_Forecast"
+        ]
+    ).copy()
+
+    daily_df["hour"] = (
+        daily_df["valid_time_ist"].dt.hour +
+        daily_df["valid_time_ist"].dt.minute / 60
+    )
+
+    daily_df = daily_df[
+        (daily_df["hour"] >= 6.5)
+        & (daily_df["hour"] <= 17.5)
+        & (daily_df["Actual_GHI"] > 50)
+    ].copy()
+
+    daily_df["Absolute_Error"] = (
+        daily_df["Actual_GHI"]
+        - daily_df["Two_Hour_Ahead_Forecast"]
+    ).abs()
+
+    daily_df["Date"] = daily_df["valid_time_ist"].dt.date
+
+    daily_mae = (
+        daily_df
+        .groupby("Date", as_index=False)
+        .agg(
+            Daily_MAE=("Absolute_Error", "mean")
+        )
+    )
+
+    return daily_mae
+
+
+daily_mae_df = calculate_daily_2hr_mae(df)
+
+st.markdown("## 📅 Daily MAE of 2-Hour Ahead Forecast")
+
+with st.container(border=True):
+
+    fig_daily_mae = go.Figure()
+
+    fig_daily_mae.add_trace(go.Bar(
+        x=daily_mae_df["Date"],
+        y=daily_mae_df["Daily_MAE"],
+        marker=dict(color=TWO_HOUR_COLOR),
+        hovertemplate="Date: %{x}<br>MAE: %{y:.2f}<extra></extra>"
+    ))
+
+    fig_daily_mae.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Daily MAE",
+        height=500,
+        showlegend=False
+    )
+
+    st.plotly_chart(
+        fig_daily_mae,
+        width="stretch",
+        config={
+            "displayModeBar": False,
+            "responsive": True
+        }
+    )
+
+# =====================================================
+# DAILY MAPE — 2-HOUR AHEAD FORECAST
+# =====================================================
+
+@st.cache_data
+def calculate_daily_2hr_mape(input_df):
+
+    daily_df = input_df.dropna(
+        subset=[
+            "valid_time_ist",
+            "Actual_GHI",
+            "Two_Hour_Ahead_Forecast"
+        ]
+    ).copy()
+
+    daily_df["hour"] = (
+        daily_df["valid_time_ist"].dt.hour +
+        daily_df["valid_time_ist"].dt.minute / 60
+    )
+
+    daily_df = daily_df[
+        (daily_df["hour"] >= 6.5)
+        & (daily_df["hour"] <= 17.5)
+        & (daily_df["Actual_GHI"] > 50)
+    ].copy()
+
+    daily_df["APE"] = (
+        (
+            daily_df["Actual_GHI"]
+            - daily_df["Two_Hour_Ahead_Forecast"]
+        ).abs()
+        / daily_df["Actual_GHI"]
+    ) * 100
+
+    daily_df["Date"] = daily_df["valid_time_ist"].dt.date
+
+    daily_mape = (
+        daily_df
+        .groupby("Date", as_index=False)
+        .agg(
+            Daily_MAPE=("APE", "mean")
+        )
+    )
+
+    return daily_mape
+
+
+daily_mape_df = calculate_daily_2hr_mape(df)
+
+st.markdown("## 📅 Daily MAPE of 2-Hour Ahead Forecast")
+
+with st.container(border=True):
+
+    fig_daily_mape = go.Figure()
+
+    fig_daily_mape.add_trace(go.Bar(
+        x=daily_mape_df["Date"],
+        y=daily_mape_df["Daily_MAPE"],
+        marker=dict(color=TWO_HOUR_COLOR),
+        hovertemplate="Date: %{x}<br>MAPE: %{y:.2f}%<extra></extra>"
+    ))
+
+    fig_daily_mape.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Daily MAPE (%)",
+        height=500,
+        showlegend=False
+    )
+
+    st.plotly_chart(
+        fig_daily_mape,
+        width="stretch",
+        config={
+            "displayModeBar": False,
+            "responsive": True
+        }
+    )
+
+
+# =====================================================
 # INDIVIDUAL MAPE DISTRIBUTION — 2-HOUR AHEAD FORECAST
 # Each valid timestamp is counted separately
 # =====================================================
