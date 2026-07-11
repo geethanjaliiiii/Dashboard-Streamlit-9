@@ -57,16 +57,19 @@ def show_section_heading(
     top_margin="18px",
     bottom_margin="12px"
 ):
-   date_html = f"""
-    <div style="
-        font-size:1.08rem;
-        font-weight:600;
-        color:inherit;
-        margin-top:6px;
-    ">
-        {start_date} to {end_date}
-    </div>
-    """
+    date_html = ""
+
+    if start_date is not None and end_date is not None:
+        date_html = f"""
+        <div style="
+            font-size:1.08rem;
+            font-weight:600;
+            color:inherit;
+            margin-top:6px;
+        ">
+            {start_date} to {end_date}
+        </div>
+        """
 
     st.markdown(
         f"""
