@@ -1915,130 +1915,6 @@ def calculate_timeslot_2hr_mape(input_df):
     timeslot_2hr_mape_end
 ) = calculate_timeslot_2hr_mape(df)
 
-
-if not timeslot_2hr_mape_performance.empty:
-
-    show_section_heading(
-        title="Time-Slot-Wise MAPE of 2-Hour Ahead Forecast",
-        start_date=timeslot_2hr_mape_start,
-        end_date=timeslot_2hr_mape_end,
-        icon="⏱️",
-        heading_size="1.5rem"
-    )
-
-    with st.container(border=True):
-
-        fig_timeslot_2hr_mape = go.Figure()
-
-        fig_timeslot_2hr_mape.add_trace(
-            go.Bar(
-                x=timeslot_2hr_mape_performance["Time_Slot"],
-                y=timeslot_2hr_mape_performance[
-                    "Time_Slot_MAPE"
-                ],
-
-                marker=dict(
-                    color=TWO_HOUR_COLOR,
-                    line=dict(
-                        color="#1F7A1F",
-                        width=1.2
-                    )
-                ),
-
-                text=[
-                    f"{value:.2f}%"
-                    for value in timeslot_2hr_mape_performance[
-                        "Time_Slot_MAPE"
-                    ]
-                ],
-
-                textposition="outside",
-                cliponaxis=False,
-
-                customdata=timeslot_2hr_mape_performance[
-                    "Prediction_Count"
-                ],
-
-                hovertemplate=(
-                    "<b>Time: %{x}</b><br>"
-                    "MAPE: %{y:.2f}%<br>"
-                    "Number of predictions: %{customdata}"
-                    "<extra></extra>"
-                ),
-
-                showlegend=False
-            )
-        )
-
-        maximum_timeslot_mape = (
-            timeslot_2hr_mape_performance[
-                "Time_Slot_MAPE"
-            ].max()
-        )
-
-        timeslot_mape_ymax = (
-            maximum_timeslot_mape * 1.18
-            if (
-                pd.notna(maximum_timeslot_mape)
-                and maximum_timeslot_mape > 0
-            )
-            else 10
-        )
-
-        ordered_time_slots = (
-            timeslot_2hr_mape_performance[
-                "Time_Slot"
-            ].tolist()
-        )
-
-        fig_timeslot_2hr_mape.update_layout(
-            xaxis_title="Time",
-            yaxis_title="MAPE (%)",
-            height=500,
-            bargap=0.22,
-            showlegend=False,
-            margin=dict(
-                l=45,
-                r=25,
-                t=35,
-                b=60
-            )
-        )
-
-        fig_timeslot_2hr_mape.update_xaxes(
-            type="category",
-            categoryorder="array",
-            categoryarray=ordered_time_slots,
-            tickmode="array",
-            tickvals=ordered_time_slots,
-            ticktext=ordered_time_slots,
-            tickangle=0,
-            fixedrange=True
-        )
-
-        fig_timeslot_2hr_mape.update_yaxes(
-            range=[0, timeslot_mape_ymax],
-            rangemode="tozero",
-            fixedrange=True
-        )
-
-        st.plotly_chart(
-            fig_timeslot_2hr_mape,
-            width="stretch",
-            key="timeslot_2hr_mape_chart",
-            config={
-                "displayModeBar": False,
-                "staticPlot": True,
-                "responsive": True
-            }
-        )
-
-else:
-    st.warning(
-        "Not enough valid 2-hour-ahead forecast data is available "
-        "to calculate time-slot-wise MAPE."
-    )
-
 # =====================================================
 # INDIVIDUAL MAPE DISTRIBUTION — 2-HOUR AHEAD FORECAST
 # Each valid timestamp is counted separately
@@ -2147,122 +2023,276 @@ def calculate_individual_2hr_mape_distribution(input_df):
 ) = calculate_individual_2hr_mape_distribution(df)
 
 
-if not individual_mape_distribution_df.empty:
+# =====================================================
+# SIDE-BY-SIDE ANALYSIS PLOTS
+# LEFT: TIME-SLOT-WISE MAPE
+# RIGHT: MAPE DISTRIBUTION
+# =====================================================
 
-    show_section_heading(
-        title="MAPE Distribution of 2-Hour Ahead Forecast",
-        start_date=individual_distribution_start,
-        end_date=individual_distribution_end,
-        icon="🎯",
-        heading_size="1.5rem"
-    )
+analysis_left, analysis_right = st.columns(2, gap="large")
+
+
+# =====================================================
+# LEFT COLUMN: TIME-SLOT-WISE MAPE
+# =====================================================
+
+with analysis_left:
 
     with st.container(border=True):
 
-        # Colours kept separate from the forecast-series colours
-        distribution_colors = [
-            "#5E35B1",  # Deep purple
-            "#8E67C7",  # Light purple
-            "#EC407A",  # Pink
-            "#AB47BC",  # Violet
-            "#78909C"   # Slate grey
-        ]
+        if not timeslot_2hr_mape_performance.empty:
 
-        fig_individual_mape_distribution = go.Figure()
-
-        fig_individual_mape_distribution.add_trace(
-            go.Pie(
-                labels=individual_mape_distribution_df[
-                    "MAPE Range"
-                ],
-                values=individual_mape_distribution_df[
-                    "Number of Predictions"
-                ],
-
-                hole=0.44,
-
-                marker=dict(
-                    colors=distribution_colors,
-                    line=dict(
-                        color="white",
-                        width=2.5
-                    )
-                ),
-
-                texttemplate=(
-                    "<b>%{label}</b><br>"
-                    "%{value} predictions<br>"
-                    "%{percent:.1%}"
-                ),
-
-                textposition="auto",
-
-                insidetextfont=dict(
-                    size=14,
-                    color="white"
-                ),
-
-                hovertemplate=(
-                    "<b>%{label}</b><br>"
-                    "Predictions: %{value}<br>"
-                    "Share: %{percent:.2%}"
-                    "<extra></extra>"
-                ),
-
-                sort=False,
-                direction="clockwise",
-                pull=[0.035, 0, 0, 0, 0],
-                automargin=True
+            show_section_heading(
+                title="Time-Slot-Wise MAPE",
+                start_date=timeslot_2hr_mape_start,
+                end_date=timeslot_2hr_mape_end,
+                icon="⏱️",
+                heading_size="1.35rem",
+                top_margin="2px",
+                bottom_margin="10px"
             )
-        )
 
-        # Total number of individual predictions in the centre
-        fig_individual_mape_distribution.update_layout(
-            height=580,
-            showlegend=False,
+            fig_timeslot_2hr_mape = go.Figure()
 
-            annotations=[
-                dict(
-                    text=(
-                        f"<b>{total_individual_predictions}</b><br>"
-                        "<span style='font-size:13px;'>"
-                        "Predictions"
-                        "</span>"
+            fig_timeslot_2hr_mape.add_trace(
+                go.Bar(
+                    x=timeslot_2hr_mape_performance[
+                        "Time_Slot"
+                    ],
+                    y=timeslot_2hr_mape_performance[
+                        "Time_Slot_MAPE"
+                    ],
+
+                    marker=dict(
+                        color=TWO_HOUR_COLOR,
+                        line=dict(
+                            color="#1F7A1F",
+                            width=1.2
+                        )
                     ),
-                    x=0.5,
-                    y=0.5,
-                    showarrow=False,
-                    align="center",
-                    font=dict(size=24)
+
+                    text=[
+                        f"{value:.2f}%"
+                        for value in
+                        timeslot_2hr_mape_performance[
+                            "Time_Slot_MAPE"
+                        ]
+                    ],
+
+                    textposition="outside",
+                    cliponaxis=False,
+
+                    customdata=timeslot_2hr_mape_performance[
+                        "Prediction_Count"
+                    ],
+
+                    hovertemplate=(
+                        "<b>Time: %{x}</b><br>"
+                        "MAPE: %{y:.2f}%<br>"
+                        "Predictions: %{customdata}"
+                        "<extra></extra>"
+                    ),
+
+                    showlegend=False
                 )
-            ],
-
-            margin=dict(
-                l=65,
-                r=65,
-                t=40,
-                b=65
-            ),
-
-            uniformtext=dict(
-                minsize=10,
-                mode="hide"
             )
-        )
 
-        st.plotly_chart(
-            fig_individual_mape_distribution,
-            width="stretch",
-            key="individual_2hr_mape_distribution",
-            config={
-                "displayModeBar": False,
-                "staticPlot": True,
-                "responsive": True
-            }
-        )
+            maximum_timeslot_mape = (
+                timeslot_2hr_mape_performance[
+                    "Time_Slot_MAPE"
+                ].max()
+            )
 
-else:
-    st.warning(
-        "Not enough valid 2-hour-ahead forecast data is "
-        "available to calculate the individual MAPE distribution."
-    )
+            timeslot_mape_ymax = (
+                maximum_timeslot_mape * 1.22
+                if (
+                    pd.notna(maximum_timeslot_mape)
+                    and maximum_timeslot_mape > 0
+                )
+                else 10
+            )
+
+            ordered_time_slots = (
+                timeslot_2hr_mape_performance[
+                    "Time_Slot"
+                ].tolist()
+            )
+
+            fig_timeslot_2hr_mape.update_layout(
+                xaxis_title="Time",
+                yaxis_title="MAPE (%)",
+                height=500,
+                bargap=0.22,
+                showlegend=False,
+                margin=dict(
+                    l=45,
+                    r=20,
+                    t=35,
+                    b=65
+                )
+            )
+
+            fig_timeslot_2hr_mape.update_xaxes(
+                type="category",
+                categoryorder="array",
+                categoryarray=ordered_time_slots,
+                tickmode="array",
+                tickvals=ordered_time_slots,
+                ticktext=ordered_time_slots,
+                tickangle=-45,
+                fixedrange=True
+            )
+
+            fig_timeslot_2hr_mape.update_yaxes(
+                range=[0, timeslot_mape_ymax],
+                rangemode="tozero",
+                fixedrange=True
+            )
+
+            st.plotly_chart(
+                fig_timeslot_2hr_mape,
+                width="stretch",
+                key="timeslot_2hr_mape_chart_side",
+                config={
+                    "displayModeBar": False,
+                    "staticPlot": True,
+                    "responsive": True
+                }
+            )
+
+        else:
+            st.markdown("### ⏱️ Time-Slot-Wise MAPE")
+
+            st.warning(
+                "Not enough valid 2-hour-ahead forecast data "
+                "is available for time-slot-wise MAPE."
+            )
+
+
+# =====================================================
+# RIGHT COLUMN: INDIVIDUAL MAPE DISTRIBUTION
+# =====================================================
+
+with analysis_right:
+
+    with st.container(border=True):
+
+        if not individual_mape_distribution_df.empty:
+
+            show_section_heading(
+                title="MAPE Distribution",
+                start_date=individual_distribution_start,
+                end_date=individual_distribution_end,
+                icon="🎯",
+                heading_size="1.35rem",
+                top_margin="2px",
+                bottom_margin="10px"
+            )
+
+            distribution_colors = [
+                "#5E35B1",  # 0–5%
+                "#8E67C7",  # >5–10%
+                "#EC407A",  # >10–15%
+                "#AB47BC",  # >15–20%
+                "#78909C"   # >20%
+            ]
+
+            fig_individual_mape_distribution = go.Figure()
+
+            fig_individual_mape_distribution.add_trace(
+                go.Pie(
+                    labels=individual_mape_distribution_df[
+                        "MAPE Range"
+                    ],
+                    values=individual_mape_distribution_df[
+                        "Number of Predictions"
+                    ],
+
+                    hole=0.44,
+
+                    marker=dict(
+                        colors=distribution_colors,
+                        line=dict(
+                            color="white",
+                            width=2.5
+                        )
+                    ),
+
+                    texttemplate=(
+                        "<b>%{label}</b><br>"
+                        "%{value}<br>"
+                        "%{percent:.1%}"
+                    ),
+
+                    textposition="auto",
+
+                    insidetextfont=dict(
+                        size=12,
+                        color="white"
+                    ),
+
+                    hovertemplate=(
+                        "<b>%{label}</b><br>"
+                        "Predictions: %{value}<br>"
+                        "Share: %{percent:.2%}"
+                        "<extra></extra>"
+                    ),
+
+                    sort=False,
+                    direction="clockwise",
+                    pull=[0.035, 0, 0, 0, 0],
+                    automargin=True
+                )
+            )
+
+            fig_individual_mape_distribution.update_layout(
+                height=500,
+                showlegend=False,
+
+                annotations=[
+                    dict(
+                        text=(
+                            f"<b>{total_individual_predictions}</b><br>"
+                            "<span style='font-size:12px;'>"
+                            "Predictions"
+                            "</span>"
+                        ),
+                        x=0.5,
+                        y=0.5,
+                        showarrow=False,
+                        align="center",
+                        font=dict(size=22)
+                    )
+                ],
+
+                margin=dict(
+                    l=40,
+                    r=40,
+                    t=20,
+                    b=45
+                ),
+
+                uniformtext=dict(
+                    minsize=9,
+                    mode="hide"
+                )
+            )
+
+            st.plotly_chart(
+                fig_individual_mape_distribution,
+                width="stretch",
+                key="individual_2hr_mape_distribution_side",
+                config={
+                    "displayModeBar": False,
+                    "staticPlot": True,
+                    "responsive": True
+                }
+            )
+
+        else:
+            st.markdown("### 🎯 MAPE Distribution")
+
+            st.warning(
+                "Not enough valid 2-hour-ahead forecast data "
+                "is available for the MAPE distribution."
+            )
