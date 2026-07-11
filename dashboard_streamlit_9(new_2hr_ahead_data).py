@@ -1988,6 +1988,218 @@ else:
         "to calculate time-slot-wise MAE."
     )
 
+# =====================================================
+# TIME-SLOT-WISE MAPE — 2-HOUR AHEAD FORECAST
+# Each bar represents the average MAPE at that time
+# across all available days
+# =====================================================
+
+@st.cache_data
+def calculate_timeslot_2hr_mape(input_df):
+
+    timeslot_mape_df = input_df.dropna(
+        subset=[
+            "valid_time_ist",
+            "Actual_GHI",
+            "Two_Hour_Ahead_Forecast"
+        ]
+    ).copy()
+
+    timeslot_mape_df["hour"] = (
+        timeslot_mape_df["valid_time_ist"].dt.hour
+        + timeslot_mape_df["valid_time_ist"].dt.minute / 60
+    )
+
+    # Same evaluation conditions used in the dashboard
+    timeslot_mape_df = timeslot_mape_df[
+        (timeslot_mape_df["hour"] >= 6.5)
+        & (timeslot_mape_df["hour"] <= 17.5)
+        & (timeslot_mape_df["Actual_GHI"] > 50)
+    ].copy()
+
+    if timeslot_mape_df.empty:
+        return pd.DataFrame(), None, None
+
+    # Absolute percentage error for each prediction
+    timeslot_mape_df["APE"] = (
+        (
+            timeslot_mape_df["Actual_GHI"]
+            - timeslot_mape_df["Two_Hour_Ahead_Forecast"]
+        ).abs()
+        / timeslot_mape_df["Actual_GHI"]
+    ) * 100
+
+    # Display time in 24-hour format
+    timeslot_mape_df["Time_Slot"] = (
+        timeslot_mape_df["valid_time_ist"].dt.strftime("%H:%M")
+    )
+
+    # Numeric value used to sort times correctly
+    timeslot_mape_df["Time_Order"] = (
+        timeslot_mape_df["valid_time_ist"].dt.hour * 60
+        + timeslot_mape_df["valid_time_ist"].dt.minute
+    )
+
+    timeslot_mape_performance = (
+        timeslot_mape_df
+        .groupby(
+            ["Time_Order", "Time_Slot"],
+            as_index=False
+        )
+        .agg(
+            Time_Slot_MAPE=("APE", "mean"),
+            Prediction_Count=("APE", "size")
+        )
+        .sort_values("Time_Order")
+        .reset_index(drop=True)
+    )
+
+    start_date = (
+        timeslot_mape_df["valid_time_ist"].dt.date.min()
+    )
+
+    end_date = (
+        timeslot_mape_df["valid_time_ist"].dt.date.max()
+    )
+
+    return (
+        timeslot_mape_performance,
+        start_date,
+        end_date
+    )
+
+
+# =====================================================
+# CALCULATE TIME-SLOT-WISE MAPE
+# =====================================================
+
+(
+    timeslot_2hr_mape_performance,
+    timeslot_2hr_mape_start,
+    timeslot_2hr_mape_end
+) = calculate_timeslot_2hr_mape(df)
+
+
+if not timeslot_2hr_mape_performance.empty:
+
+    st.markdown(
+        f"## ⏱️ Time-Slot-Wise MAPE of 2-Hour Ahead Forecast "
+        f"({timeslot_2hr_mape_start} to {timeslot_2hr_mape_end})"
+    )
+
+    with st.container(border=True):
+
+        fig_timeslot_2hr_mape = go.Figure()
+
+        fig_timeslot_2hr_mape.add_trace(
+            go.Bar(
+                x=timeslot_2hr_mape_performance["Time_Slot"],
+                y=timeslot_2hr_mape_performance[
+                    "Time_Slot_MAPE"
+                ],
+
+                marker=dict(
+                    color=TWO_HOUR_COLOR,
+                    line=dict(
+                        color="#1F7A1F",
+                        width=1.2
+                    )
+                ),
+
+                text=[
+                    f"{value:.2f}%"
+                    for value in timeslot_2hr_mape_performance[
+                        "Time_Slot_MAPE"
+                    ]
+                ],
+
+                textposition="outside",
+                cliponaxis=False,
+
+                customdata=timeslot_2hr_mape_performance[
+                    "Prediction_Count"
+                ],
+
+                hovertemplate=(
+                    "<b>Time: %{x}</b><br>"
+                    "MAPE: %{y:.2f}%<br>"
+                    "Number of predictions: %{customdata}"
+                    "<extra></extra>"
+                ),
+
+                showlegend=False
+            )
+        )
+
+        maximum_timeslot_mape = (
+            timeslot_2hr_mape_performance[
+                "Time_Slot_MAPE"
+            ].max()
+        )
+
+        timeslot_mape_ymax = (
+            maximum_timeslot_mape * 1.18
+            if (
+                pd.notna(maximum_timeslot_mape)
+                and maximum_timeslot_mape > 0
+            )
+            else 10
+        )
+
+        ordered_time_slots = (
+            timeslot_2hr_mape_performance[
+                "Time_Slot"
+            ].tolist()
+        )
+
+        fig_timeslot_2hr_mape.update_layout(
+            xaxis_title="Time",
+            yaxis_title="MAPE (%)",
+            height=500,
+            bargap=0.22,
+            showlegend=False,
+            margin=dict(
+                l=45,
+                r=25,
+                t=35,
+                b=60
+            )
+        )
+
+        fig_timeslot_2hr_mape.update_xaxes(
+            type="category",
+            categoryorder="array",
+            categoryarray=ordered_time_slots,
+            tickmode="array",
+            tickvals=ordered_time_slots,
+            ticktext=ordered_time_slots,
+            tickangle=0,
+            fixedrange=True
+        )
+
+        fig_timeslot_2hr_mape.update_yaxes(
+            range=[0, timeslot_mape_ymax],
+            rangemode="tozero",
+            fixedrange=True
+        )
+
+        st.plotly_chart(
+            fig_timeslot_2hr_mape,
+            width="stretch",
+            key="timeslot_2hr_mape_chart",
+            config={
+                "displayModeBar": False,
+                "staticPlot": True,
+                "responsive": True
+            }
+        )
+
+else:
+    st.warning(
+        "Not enough valid 2-hour-ahead forecast data is available "
+        "to calculate time-slot-wise MAPE."
+    )
+
 
 # =====================================================
 # INDIVIDUAL MAPE DISTRIBUTION — 2-HOUR AHEAD FORECAST
