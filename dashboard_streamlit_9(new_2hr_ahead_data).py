@@ -68,7 +68,7 @@ def show_section_heading(
     
         date_html = f"""
         <div style="
-            font-size:1.15rem;
+            font-size:1.5rem;
             font-weight:600;
             color:inherit;
             margin-top:6px;
