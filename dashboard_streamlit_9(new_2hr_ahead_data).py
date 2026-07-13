@@ -59,15 +59,21 @@ def show_section_heading(
 ):
     date_html = ""
 
-    if start_date is not None and end_date is not None:
+    if start_date is not None:
+    
+        if end_date is not None and end_date != "":
+            date_text = f"{start_date} to {end_date}"
+        else:
+            date_text = f"{start_date}"
+    
         date_html = f"""
         <div style="
-            font-size:1.5rem;
+            font-size:1.15rem;
             font-weight:600;
             color:inherit;
             margin-top:6px;
         ">
-            {start_date} to {end_date}
+            {date_text}
         </div>
         """
 
