@@ -364,15 +364,23 @@ else:
     else:
         pass
 
-    show_section_heading(
-        title="Forecasted GHI",
-        start_date=selected_date,
-        end_date="",
-        icon="☀️",
-        heading_size="1.55rem",
-        top_margin="0px",
-        bottom_margin="10px"
+    fig1.update_layout(
+        title=dict(
+            text=f"☀️ Forecasted GHI for {selected_date}",
+            font=dict(size=28)
+        ),
+        xaxis_title="Time",
+        yaxis_title="GHI",
+        height=450,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
+
 
     fig1.update_xaxes(
         tickmode="array",
