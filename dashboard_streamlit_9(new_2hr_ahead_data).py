@@ -565,6 +565,15 @@ else:
 
                 fig3.add_trace(go.Scatter(
                     x=two_hour_df["valid_time_ist"],
+                    y=two_hour_df["Daily_Forecast_GHI"],
+                    mode="lines+markers",
+                    name="Daily Forecast GHI",
+                    line=dict(color=DAILY_FORECAST_COLOR),
+                    marker=dict(color=DAILY_FORECAST_COLOR)
+                ))
+
+                fig3.add_trace(go.Scatter(
+                    x=two_hour_df["valid_time_ist"],
                     y=two_hour_df["Two_Hour_Ahead_Forecast"],
                     mode="lines+markers",
                     name="2-Hour Ahead Forecast",
@@ -795,6 +804,15 @@ else:
                         name="GFS GHI",
                         line=dict(color=GFS_COLOR),
                         marker=dict(color=GFS_COLOR)
+                    ))
+
+                    fig_prev2.add_trace(go.Scatter(
+                        x=previous_two_hour_df["valid_time_ist"],
+                        y=previous_two_hour_df["Daily_Forecast_GHI"],
+                        mode="lines+markers",
+                        name="Daily Forecast GHI",
+                        line=dict(color=DAILY_FORECAST_COLOR),
+                        marker=dict(color=DAILY_FORECAST_COLOR)
                     ))
 
                     # 2-Hour Ahead Forecast — red
