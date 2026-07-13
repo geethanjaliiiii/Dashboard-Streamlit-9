@@ -487,15 +487,25 @@ else:
     # RIGHT: DAILY FORECAST GHI ONLY
     # =====================================================
 
-    left_col, right_col = st.columns(2)
+    st.markdown(
+        """
+        <h2 style="
+            margin-top:20px;
+            margin-bottom:10px;
+            font-size:1.65rem;
+            font-weight:700;
+        ">
+            📈 Forecast Performance Comparison
+        </h2>
+        """,
+        unsafe_allow_html=True
+    )
 
     left_col, right_col = st.columns(2)
 
     with left_col:
 
         with st.container(border=True):
-
-            st.markdown("### GFS vs Daily Forecast GHI")
 
             fig2 = go.Figure()
 
@@ -549,8 +559,7 @@ else:
 
     with right_col:
         with st.container(border=True):
-            st.markdown("### GFS vs 2-Hour Ahead Forecast")
-
+            
             fig3 = go.Figure()
 
             if has_two_hour_forecast:
@@ -661,7 +670,7 @@ else:
     else:
 
         show_section_heading(
-            title="Previous Day Performance Comparison",
+            title="Previous Day Performance Comparison of Forecasted GHI",
             start_date=previous_day,
             icon="📈",
             heading_size="2.0rem"
@@ -692,10 +701,6 @@ else:
 
         with prev_left:
             with st.container(border=True):
-
-                st.markdown(
-                    "### Actual vs GFS vs Daily Forecast"
-                )
 
                 fig_prev1 = go.Figure()
 
@@ -771,10 +776,6 @@ else:
 
         with prev_right:
             with st.container(border=True):
-
-                st.markdown(
-                    "### Actual vs GFS vs 2-Hour Ahead Forecast"
-                )
 
                 fig_prev2 = go.Figure()
 
