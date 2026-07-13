@@ -1049,7 +1049,7 @@ else:
             start_date=cumulative_2hr_start,
             end_date=cumulative_2hr_end,
             icon="📊",
-            heading_size="1.55rem"
+            heading_size="2.0rem"
         )
 
         actual_cum_2hr = cumulative_2hr_df["Actual_GHI"]
