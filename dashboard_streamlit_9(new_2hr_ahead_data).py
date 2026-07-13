@@ -914,7 +914,7 @@ else:
             start_date=start_date,
             end_date=end_date,
             icon="📊",
-            heading_size="1.55rem"
+            heading_size="1.7rem"
         )
 
         metric_col1, metric_col2, metric_col3 = st.columns(3)
