@@ -644,13 +644,12 @@ else:
         )
 
     else:
-        st.markdown(
-            f"""
-            <h2 style="margin-top:20px; margin-bottom:10px;">
-                📈 Previous Day Performance Comparison ({previous_day})
-            </h2>
-            """,
-            unsafe_allow_html=True
+
+        show_section_heading(
+            title="Previous Day Performance Comparison",
+            start_date=previous_day,
+            icon="📈",
+            heading_size="2.0rem"
         )
 
         # Common y-axis maximum
