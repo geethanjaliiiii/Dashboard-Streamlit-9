@@ -62,7 +62,7 @@ def show_section_heading(
     if start_date is not None and end_date is not None:
         date_html = f"""
         <div style="
-            font-size:1.08rem;
+            font-size:1.1rem;
             font-weight:600;
             color:inherit;
             margin-top:6px;
