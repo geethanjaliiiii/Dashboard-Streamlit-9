@@ -1278,7 +1278,7 @@ else:
             start_date="Beginning of dataset",
             end_date=previous_day,
             icon="📊",
-            heading_size="1.55rem"
+            heading_size="2.0rem"
         )
 
         st.warning(
